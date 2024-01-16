@@ -18,7 +18,7 @@ const urlsToCache = [
 ];
 
 // Evento de instalación
-self.addEventListener('install', event => {
+sw.addEventListener('install', event => {
     event.waitUntil(
         caches.open('meta-data').then(cache => {
             return cache.match('CACHE_NAME').then(response => {
@@ -45,15 +45,17 @@ self.addEventListener('install', event => {
 });
 
 // Evento de activación
-self.addEventListener('activate', event => {
-    self.clients.claim();
+sw.addEventListener('activate', event => {
+    console.log('llego');
     event.waitUntil(
         // Realizar tareas de activación, como eliminar cachés antiguas
         caches.keys().then(cacheNames => {
+            // console.log(cacheNames);
             return Promise.all(
                 cacheNames.filter(cacheName => {
                     return cacheName !== CACHE_NAME;
                 }).map(cacheName => {
+                    // console.log('deleted: ',cacheName);
                     return caches.delete(cacheName);
                 })
             );
@@ -62,10 +64,11 @@ self.addEventListener('activate', event => {
             .then(() => caches.open('meta-data'))
             .then(cache => cache.put('CACHE_NAME', CACHE_NAME))
     );
+    return self.clients.claim();
 });
 
 // Evento de solicitud
-self.addEventListener('fetch', event => {
+sw.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request).then(response => {
             if (response) {
@@ -164,7 +167,7 @@ function showUpdateNotification(status = false, version = '') {
     let status_msg = status ? 'Actualización completada' : 'Actualización fallida';
     let message = status ? 'Actualizado con éxito a la versión ' + version : 'Error de actualizacion, se mantiene la versión ' + version;
 
-    self.registration.showNotification(status_msg, {
+    sw.registration.showNotification(status_msg, {
         body: message,
         icon: '/icon.png',
         vibrate: [200, 100],

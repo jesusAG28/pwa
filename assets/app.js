@@ -38,8 +38,9 @@ if ('serviceWorker' in navigator && 'Notification' in window) {
 
     navigator.serviceWorker.addEventListener('message', event => {
         if (event.data && event.data.type === 'reload') {
-            alert('Service Worker se ha actualizado. Recargando la página...');
-            window.location.reload();
+            // alert('Service Worker se ha actualizado. Recargando la página...');
+            // window.location.reload(true);
+            updateView();
         }
     });
 
@@ -177,3 +178,50 @@ if (installButton) {
         });
     });
 }
+
+
+function updateView() {
+    var counter = 3;
+    var interval = setInterval(function () {
+        counter--;
+        console.log(counter);
+
+        if (counter === 0) {
+            clearInterval(interval);
+            window.location.reload(true);
+        }
+    }, 1000);
+
+    caches.keys().then(cacheNames => {
+        let latestCacheName = '';
+        let latestTimestamp = 0;
+
+        cacheNames.forEach(cacheName => {
+            // Extraer el timestamp del nombre de la caché
+            const match = cacheName.match(/^v(\d+\.\d+)-\d+$/);
+            if (match) {
+                const timestamp = parseFloat(match[1]);
+                if (timestamp > latestTimestamp) {
+                    latestTimestamp = timestamp;
+                    latestCacheName = cacheName;
+                }
+            }
+        });
+
+        return Promise.all(
+            cacheNames.filter(cacheName => {
+                // Filtrar las cachés que no son la más reciente
+                return cacheName !== latestCacheName;
+            }).map(cacheName => {
+                // Borrar las cachés no deseadas
+                return caches.delete(cacheName);
+            })
+        );
+    }).then(() => {
+        console.log('Caches antiguas eliminadas. Manteniendo la más reciente.');
+    });
+
+    localStorage.clear();
+    sessionStorage.clear();
+}
+
