@@ -45,24 +45,12 @@ sw.addEventListener('install', event => {
 });
 
 // Evento de activación
-sw.addEventListener('activate', event => {
-    console.log('llego');
+self.addEventListener('activate', event => {
     event.waitUntil(
-        // Realizar tareas de activación, como eliminar cachés antiguas
-        caches.keys().then(cacheNames => {
-            // console.log(cacheNames);
-            return Promise.all(
-                cacheNames.filter(cacheName => {
-                    return cacheName !== CACHE_NAME;
-                }).map(cacheName => {
-                    // console.log('deleted: ',cacheName);
-                    return caches.delete(cacheName);
-                })
-            );
+        // Obtener la versión actual del caché
+        getCurrentCacheName().then(currentCacheName => {
+            console.log('Versión de caché en activación:', currentCacheName);
         })
-            // Escribir el nuevo valor en la caché 'meta-data'
-            .then(() => caches.open('meta-data'))
-            .then(cache => cache.put('CACHE_NAME', CACHE_NAME))
     );
     return self.clients.claim();
 });
@@ -100,14 +88,14 @@ function checkForUpdate() {
         return null;
     }).then(savedCacheName => {
         currentCacheName = savedCacheName || 'v1.0';
-        console.log('Versión de caché:', currentCacheName);
+        // console.log('Versión de caché:', currentCacheName);
 
         // Fetch de la versión del servidor
         fetch(BASE_URL + 'version.json', { cache: 'no-store' })
             .then(response => response.json())
             .then(data => {
                 const serverVersion = data.version;
-                console.log('Versión del servidor:', serverVersion);
+                // console.log('Versión del servidor:', serverVersion);
 
                 // Comprobar si hay una nueva versión
                 if (serverVersion > currentCacheName) {
@@ -127,7 +115,7 @@ function checkForUpdate() {
                         })
                         .then(() => {
                             console.log('Service worker actualizado a la versión', serverVersion);
-                            showUpdateNotification(true, serverVersion);
+                            // showUpdateNotification(true, serverVersion);
 
                             // Forzar al nuevo Service Worker a tomar el control inmediato
                             self.skipWaiting();
@@ -136,16 +124,23 @@ function checkForUpdate() {
                             self.clients.claim();
 
                             // Opcional: Puedes enviar un mensaje a las páginas para que se recarguen
+                            deleteOldCaches(serverVersion);
+
                             self.clients.matchAll().then(clients => {
                                 clients.forEach(client => {
-                                    client.postMessage({ type: 'reload', message: 'Service Worker updated' });
+                                    client.postMessage(
+                                        {
+                                            type: 'reload',
+                                            message: 'Service Worker updated',
+                                            version: serverVersion
+                                        });
                                 });
                             });
 
                         })
                         .catch(error => {
                             console.error('Error al actualizar el service worker:', error);
-                            showUpdateNotification(false, currentCacheName);
+                            // showUpdateNotification(false, currentCacheName);
                         })
                         .finally(() => {
                             updatingCache = false; // Marcar que la actualización ha terminado
@@ -156,12 +151,23 @@ function checkForUpdate() {
             })
             .catch(error => {
                 console.error('Error al comprobar la versión del servidor:', error);
-                showUpdateNotification(false, currentCacheName);
+                // showUpdateNotification(false, currentCacheName);
                 updatingCache = false; // Marcar que la actualización ha terminado en caso de error
             });
     });
 }
 
+// Obtener la versión actual del caché
+function getCurrentCacheName() {
+    return caches.open('meta-data').then(metaCache => {
+        return metaCache.match('CACHE_NAME').then(response => {
+            if (response) {
+                return response.text();
+            }
+            return null;
+        });
+    });
+}
 
 function showUpdateNotification(status = false, version = '') {
     let status_msg = status ? 'Actualización completada' : 'Actualización fallida';
@@ -172,6 +178,23 @@ function showUpdateNotification(status = false, version = '') {
         icon: '/icon.png',
         vibrate: [200, 100],
         data: { url: "'" + BASE_URL + "'" } // Puedes especificar la URL a la que redirigir al hacer clic
+    });
+}
+
+function deleteOldCaches(version) {
+    caches.keys().then(cacheNames => {
+        return Promise.all(
+            cacheNames.filter(cacheName => {
+                // Mantener la caché que coincide con la versión proporcionada
+                return cacheName !== version && cacheName !=='meta-data' ;
+            }).map(cacheName => {
+                // Borrar las cachés no deseadas
+                console.log('deleting ', cacheName);
+                return caches.delete(cacheName);
+            })
+        );
+    }).then(() => {
+        console.log('Caché antigua eliminada. Manteniendo la versión:', version);
     });
 }
 
