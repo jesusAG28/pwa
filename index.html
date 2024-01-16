@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <title>PWA con notificaciones y CTA</title>
+    <meta charset="utf8">
+    <link rel="manifest" href="assets/manifest.json">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+
+<body>
+    <h1>PWA con notificaciones y CTA</h1>
+    <p>Esta es una aplicación web progresiva que muestra cómo usar las notificaciones y los call to action.</p>
+    <button id="subscribe">Suscribirse a las notificaciones</button>
+    <button id="notify">Enviar una notificación</button>
+
+    <!-- Añadir este botón en tu archivo HTML -->
+    <button id="installButton" style="display: none;">Instalar PWA</button>
+
+
+    <div class="loader-container" style="display: none;">
+        <div class="loader"></div>
+        <div class="text">Actualizando...</div>
+    </div>
+    <script src="assets/app.js"></script>
+</body>
+
+</html>
