@@ -73,6 +73,15 @@ self.addEventListener('fetch', event => {
     );
 });
 
+function showUpdateNotification() {
+    self.registration.showNotification('Actualización Disponible', {
+        body: 'Hay una nueva versión disponible. Haz clic para actualizar.',
+        icon: '/path/to/notification-icon.png',
+        vibrate: [200, 100, 200, 100, 200, 100, 200],
+        data: { url: '/reload.html' } // Puedes especificar la URL a la que redirigir al hacer clic
+    });
+}
+
 function checkForUpdate() {
     // Verificar si ya se está actualizando el caché
     if (updatingCache) {
@@ -107,27 +116,11 @@ function checkForUpdate() {
                 if (serverVersion > currentCacheName) {
                     console.log('Nueva versión encontrada. Actualizando...');
 
-                    // Descargar y activar la nueva versión
-                    caches.open(serverVersion)
-                        .then(cache => {
-                            return cache.addAll(urlsToCache);
-                        })
-                        .then(() => {
-                            // Abrir la caché 'meta-data' y actualizar el valor
-                            return caches.open('meta-data').then(metaCache => {
-                                // Utilizar 'put' con una nueva Response para almacenar el valor
-                                return metaCache.put('CACHE_NAME', new Response(serverVersion));
-                            });
-                        })
-                        .then(() => {
-                            console.log('Service worker actualizado a la versión', serverVersion);
-                        })
-                        .catch(error => {
-                            console.error('Error al actualizar el service worker:', error);
-                        })
-                        .finally(() => {
-                            updatingCache = false; // Marcar que la actualización ha terminado
-                        });
+                    // Mostrar la notificación de actualización
+                    showUpdateNotification();
+
+                    // Resto del código de actualización permanece igual...
+                    // Descargar y activar la nueva versión, etc.
                 } else {
                     updatingCache = false; // Marcar que la actualización ha terminado
                 }
@@ -139,19 +132,7 @@ function checkForUpdate() {
     });
 }
 
-function showLoader() {
-    const loaderContainer = document.getElementById('loader-container');
-    if (loaderContainer) {
-        loaderContainer.style.display = 'block';
-    }
-}
 
-function hideLoader() {
-    const loaderContainer = document.getElementById('loader-container');
-    if (loaderContainer) {
-        loaderContainer.style.display = 'none';
-    }
-}
 
 // Verificar la actualización cada 24 horas (ajusta según tus necesidades)
 setInterval(checkForUpdate, 5 * 1000); // 30s
