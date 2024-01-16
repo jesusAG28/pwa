@@ -7,7 +7,7 @@ const BASE_URL = 'https://pwa.test/';
 // Variable para controlar el estado de la actualización
 let updatingCache = false;
 
-let CACHE_NAME = 'v1.0';
+let CACHE_NAME = '0.0.1';
 
 // Archivos para almacenar en caché
 const urlsToCache = [
@@ -56,16 +56,55 @@ self.addEventListener('activate', event => {
 });
 
 // Evento de solicitud
+// sw.addEventListener('fetch', event => {
+//     event.respondWith(
+//         caches.match(event.request).then(response => {
+//             if (response) {
+//                 return response;
+//             }
+//             return fetch(event.request);
+//         })
+//     );
+// });
+
 sw.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request).then(response => {
-            if (response) {
-                return response;
-            }
-            return fetch(event.request);
-        })
-    );
+    if (!navigator.onLine) {
+        // Estás fuera de línea, manejar la lógica personalizada aquí
+        // Solo salta al cargar o recargar la pagina 
+        // sendNotification('Offline', 'Has pedido la conexion a internet');
+        event.respondWith(new Response('Estás fuera de línea.'));
+    } else {
+        // Estás en línea, continuar con la solicitud normal
+        event.respondWith(
+            caches.match(event.request).then(response => {
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request);
+            })
+        );
+    }
 });
+
+// Evento conexion activa
+// window.addEventListener('online', () => {
+//     showOnline();
+// });
+
+
+
+// TODO revisar
+// Agrega un event listener para el evento 'online'
+sw.addEventListener('online', (event) => {
+    sendNotification('En línea', 'Te has conectado');
+});
+
+// TODO revisar
+// Agrega un event listener para el evento 'offline'
+sw.addEventListener('offline', (event) => {
+    sendNotification('Offline', 'Has pedido la conexion a internet');
+});
+
 
 function checkForUpdate() {
     // Verificar si ya se está actualizando el caché
@@ -173,11 +212,15 @@ function showUpdateNotification(status = false, version = '') {
     let status_msg = status ? 'Actualización completada' : 'Actualización fallida';
     let message = status ? 'Actualizado con éxito a la versión ' + version : 'Error de actualizacion, se mantiene la versión ' + version;
 
-    sw.registration.showNotification(status_msg, {
+    sendNotification(status_msg, message);
+}
+
+function sendNotification(title, message) {
+    sw.registration.showNotification(title, {
         body: message,
         icon: '/icon.png',
         vibrate: [200, 100],
-        data: { url: "'" + BASE_URL + "'" } // Puedes especificar la URL a la que redirigir al hacer clic
+        data: { url: "'" + BASE_URL + "'" }
     });
 }
 
@@ -186,7 +229,7 @@ function deleteOldCaches(version) {
         return Promise.all(
             cacheNames.filter(cacheName => {
                 // Mantener la caché que coincide con la versión proporcionada
-                return cacheName !== version && cacheName !=='meta-data' ;
+                return cacheName !== version && cacheName !== 'meta-data';
             }).map(cacheName => {
                 // Borrar las cachés no deseadas
                 console.log('deleting ', cacheName);
@@ -199,5 +242,5 @@ function deleteOldCaches(version) {
 }
 
 // Verificar la actualización cada 24 horas (ajusta según tus necesidades)
-setInterval(checkForUpdate, 5 * 1000); // 30s
+setInterval(checkForUpdate, 15 * 1000); // 30s
 // setInterval(checkForUpdate, 24 * 60 * 60 * 1000); // 24H

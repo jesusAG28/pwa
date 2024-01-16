@@ -38,7 +38,6 @@ if ('serviceWorker' in navigator && 'Notification' in window) {
 
     navigator.serviceWorker.addEventListener('message', event => {
         if (event.data && event.data.type === 'reload') {
-            // alert('Service Worker se ha actualizado. Recargando la página...');
             // window.location.reload(true);
             updateView(event.data.version);
         }
@@ -74,61 +73,6 @@ if ('serviceWorker' in navigator && 'Notification' in window) {
         }
     });
 
-    // Función para solicitar el permiso y la suscripción
-    function subscribe() {
-        // Solicitar el permiso para enviar notificaciones
-        Notification.requestPermission(function (result) {
-            if (result === 'granted') {
-                // Si el permiso es concedido, obtener el service worker
-                navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-                    // Crear una suscripción al servidor de notificaciones
-                    serviceWorkerRegistration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
-                    })
-                        .then(function (subscription) {
-                            // Si la suscripción es exitosa, cambiar el texto del botón
-                            subscribeButton.textContent = 'Cancelar suscripción';
-                            console.log('Usuario suscrito:', subscription.endpoint);
-                        })
-                        .catch(function (error) {
-                            // Si la suscripción falla, mostrar un mensaje de error
-                            console.log('Error al suscribir el usuario:', error);
-                            alert('No se ha podido suscribir el usuario.');
-                        });
-                });
-            } else {
-                // Si el permiso es denegado, mostrar un mensaje de alerta
-                alert('No se ha concedido el permiso para enviar notificaciones.');
-            }
-        });
-    }
-
-    // Función para cancelar la suscripción
-    function unsubscribe() {
-        // Obtener el service worker
-        navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-            // Obtener la suscripción actual
-            serviceWorkerRegistration.pushManager.getSubscription()
-                .then(function (subscription) {
-                    // Si el usuario está suscrito, cancelar la suscripción
-                    if (subscription) {
-                        subscription.unsubscribe()
-                            .then(function () {
-                                // Si la cancelación es exitosa, cambiar el texto del botón
-                                subscribeButton.textContent = 'Suscribirse a las notificaciones';
-                                console.log('Usuario cancelado:', subscription.endpoint);
-                            })
-                            .catch(function (error) {
-                                // Si la cancelación falla, mostrar un mensaje de error
-                                console.log('Error al cancelar el usuario:', error);
-                                alert('No se ha podido cancelar el usuario.');
-                            });
-                    }
-                });
-        });
-    }
-
     // Obtener el botón de notificación
     var notifyButton = document.getElementById('notify');
 
@@ -152,6 +96,16 @@ if ('serviceWorker' in navigator && 'Notification' in window) {
         });
     });
 
+    // Evento conexion activa
+    window.addEventListener('online', () => {
+        showOnline();
+    });
+
+    // Evento desconectado
+    window.addEventListener('offline', () => {
+        showOffline();
+    });
+
 } else {
     // Si el navegador no soporta service workers o notificaciones, mostrar un mensaje de alerta
     alert('Tu navegador no soporta las notificaciones o los service workers.');
@@ -160,6 +114,7 @@ if ('serviceWorker' in navigator && 'Notification' in window) {
 
 // Añadir un evento al botón de instalación
 var installButton = document.getElementById('installButton');
+
 if (installButton) {
     installButton.addEventListener('click', function () {
         // Mostrar el banner de instalación
@@ -179,7 +134,6 @@ if (installButton) {
     });
 }
 
-
 function updateView(version) {
     var counter = 3;
     var interval = setInterval(function () {
@@ -196,3 +150,69 @@ function updateView(version) {
     sessionStorage.clear();
 }
 
+// Función para solicitar el permiso y la suscripción
+function subscribe() {
+    // Solicitar el permiso para enviar notificaciones
+    Notification.requestPermission(function (result) {
+        if (result === 'granted') {
+            // Si el permiso es concedido, obtener el service worker
+            navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+                // Crear una suscripción al servidor de notificaciones
+                serviceWorkerRegistration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
+                })
+                    .then(function (subscription) {
+                        // Si la suscripción es exitosa, cambiar el texto del botón
+                        subscribeButton.textContent = 'Cancelar suscripción';
+                        console.log('Usuario suscrito:', subscription.endpoint);
+                    })
+                    .catch(function (error) {
+                        // Si la suscripción falla, mostrar un mensaje de error
+                        console.log('Error al suscribir el usuario:', error);
+                        alert('No se ha podido suscribir el usuario.');
+                    });
+            });
+        } else {
+            // Si el permiso es denegado, mostrar un mensaje de alerta
+            alert('No se ha concedido el permiso para enviar notificaciones.');
+        }
+    });
+}
+
+// Función para cancelar la suscripción
+function unsubscribe() {
+    // Obtener el service worker
+    navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+        // Obtener la suscripción actual
+        serviceWorkerRegistration.pushManager.getSubscription()
+            .then(function (subscription) {
+                // Si el usuario está suscrito, cancelar la suscripción
+                if (subscription) {
+                    subscription.unsubscribe()
+                        .then(function () {
+                            // Si la cancelación es exitosa, cambiar el texto del botón
+                            subscribeButton.textContent = 'Suscribirse a las notificaciones';
+                            console.log('Usuario cancelado:', subscription.endpoint);
+                        })
+                        .catch(function (error) {
+                            // Si la cancelación falla, mostrar un mensaje de error
+                            console.log('Error al cancelar el usuario:', error);
+                            alert('No se ha podido cancelar el usuario.');
+                        });
+                }
+            });
+    });
+}
+
+function showOnline() {
+    // document.getElementById('online').style.backgroundColor = '#8BC34A';
+    document.getElementById('online').style.display = 'block';
+    document.getElementById('offline').style.display = 'none';
+}
+
+function showOffline() {
+    // document.getElementById('online').style.backgroundColor = '#F44336';
+    document.getElementById('online').style.display = 'none';
+    document.getElementById('offline').style.display = 'block';
+}

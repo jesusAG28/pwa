@@ -14,7 +14,7 @@ button {
     cursor: pointer;
 }
 
-#buttons{
+#buttons {
     display: flex;
     flex-direction: column;
     align-items: center
@@ -55,4 +55,34 @@ button {
     font-family: Arial, sans-serif;
     font-size: 20px;
     color: #3498db;
+}
+
+
+.status {
+    padding: 10px;
+    margin: 10px;
+    border: 1px solid #ccc;
+    width: 100px;
+    transition: background-color 0.5s ease-in-out;
+}
+
+#online {
+    background-color: #8BC34A;
+}
+
+#offline {
+    background-color: #F44336;
+    display: none;
+    /* Inicialmente oculto */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
