@@ -36,6 +36,12 @@ if ('serviceWorker' in navigator && 'Notification' in window) {
         document.getElementById('installButton').style.display = 'block';
     });
 
+    navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data && event.data.type === 'reload') {
+            console.log('Service Worker se ha actualizado. Recargando la página...');
+            window.location.reload();
+        }
+    });
 
     // Obtener el botón de suscripción
     var subscribeButton = document.getElementById('subscribe');

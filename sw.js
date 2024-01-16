@@ -2,6 +2,8 @@
 // const sw = navigator.serviceWorker.controller;
 const sw = self;
 
+const BASE_URL = 'https://pwa.test/';
+
 // Variable para controlar el estado de la actualización
 let updatingCache = false;
 
@@ -11,7 +13,8 @@ let CACHE_NAME = 'v1.0';
 const urlsToCache = [
     '/',
     '/assets/style.css',
-    '/assets/app.js'
+    '/assets/app.js',
+    '/index.html'
 ];
 
 // Evento de instalación
@@ -97,7 +100,7 @@ function checkForUpdate() {
         console.log('Versión de caché:', currentCacheName);
 
         // Fetch de la versión del servidor
-        fetch('https://pwa.test/version.json', { cache: 'no-store' })
+        fetch(BASE_URL + 'version.json', { cache: 'no-store' })
             .then(response => response.json())
             .then(data => {
                 const serverVersion = data.version;
@@ -121,9 +124,25 @@ function checkForUpdate() {
                         })
                         .then(() => {
                             console.log('Service worker actualizado a la versión', serverVersion);
+                            showUpdateNotification(true, serverVersion);
+
+                            // Forzar al nuevo Service Worker a tomar el control inmediato
+                            self.skipWaiting();
+
+                            // Recargar las páginas controladas por el Service Worker
+                            self.clients.claim();
+
+                            // Opcional: Puedes enviar un mensaje a las páginas para que se recarguen
+                            self.clients.matchAll().then(clients => {
+                                clients.forEach(client => {
+                                    client.postMessage({ type: 'reload', message: 'Service Worker updated' });
+                                });
+                            });
+
                         })
                         .catch(error => {
                             console.error('Error al actualizar el service worker:', error);
+                            showUpdateNotification(false, currentCacheName);
                         })
                         .finally(() => {
                             updatingCache = false; // Marcar que la actualización ha terminado
@@ -134,23 +153,23 @@ function checkForUpdate() {
             })
             .catch(error => {
                 console.error('Error al comprobar la versión del servidor:', error);
+                showUpdateNotification(false, currentCacheName);
                 updatingCache = false; // Marcar que la actualización ha terminado en caso de error
             });
     });
 }
 
-function showLoader() {
-    const loaderContainer = document.getElementById('loader-container');
-    if (loaderContainer) {
-        loaderContainer.style.display = 'block';
-    }
-}
 
-function hideLoader() {
-    const loaderContainer = document.getElementById('loader-container');
-    if (loaderContainer) {
-        loaderContainer.style.display = 'none';
-    }
+function showUpdateNotification(status = false, version = '') {
+    let status_msg = status ? 'Actualización completada' : 'Actualización fallida';
+    let message = status ? 'Actualizado con éxito a la versión ' + version : 'Error de actualizacion, se mantiene la versión ' + version;
+
+    self.registration.showNotification(status_msg, {
+        body: message,
+        icon: '/icon.png',
+        vibrate: [200, 100],
+        data: { url: "'" + BASE_URL + "'" } // Puedes especificar la URL a la que redirigir al hacer clic
+    });
 }
 
 // Verificar la actualización cada 24 horas (ajusta según tus necesidades)
