@@ -115,7 +115,7 @@ function checkForUpdate() {
                         })
                         .then(() => {
                             console.log('Service worker actualizado a la versión', serverVersion);
-                            // showUpdateNotification(true, serverVersion);
+                            showUpdateNotification(true, serverVersion);
 
                             // Forzar al nuevo Service Worker a tomar el control inmediato
                             self.skipWaiting();
