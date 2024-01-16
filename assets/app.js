@@ -38,7 +38,7 @@ if ('serviceWorker' in navigator && 'Notification' in window) {
 
     navigator.serviceWorker.addEventListener('message', event => {
         if (event.data && event.data.type === 'reload') {
-            console.log('Service Worker se ha actualizado. Recargando la página...');
+            alert('Service Worker se ha actualizado. Recargando la página...');
             window.location.reload();
         }
     });
