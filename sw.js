@@ -7,7 +7,7 @@ const BASE_URL = 'https://pwa.test/';
 // Variable para controlar el estado de la actualización
 let updatingCache = false;
 
-let CACHE_NAME = '0.0.1';
+let CACHE_NAME = '1.0';
 
 // Archivos para almacenar en caché
 const urlsToCache = [
@@ -126,7 +126,7 @@ function checkForUpdate() {
         }
         return null;
     }).then(savedCacheName => {
-        currentCacheName = savedCacheName || 'v1.0';
+        currentCacheName = savedCacheName || '1.0';
         // console.log('Versión de caché:', currentCacheName);
 
         // Fetch de la versión del servidor
